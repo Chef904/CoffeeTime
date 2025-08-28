@@ -98,7 +98,7 @@ struct BrewingSessionDetailView: View {
                     
                     SessionDetailRow(
                         title: "Wassertemperatur",
-                        value: session.waterTemperature.map { "\($0, specifier: "%.0f")°C" } ?? "Nicht angegeben",
+                        value: session.waterTemperature.map { "\(String(format: "%.0f", $0))°C" } ?? "Nicht angegeben",
                         isEditing: isEditing
                     ) {
                         HStack {
@@ -109,7 +109,7 @@ struct BrewingSessionDetailView: View {
                     
                     SessionDetailRow(
                         title: "Brühzeit",
-                        value: session.brewTime.map { "\($0, specifier: "%.0f") Sekunden" } ?? "Nicht angegeben",
+                        value: session.brewTime.map { "\(String(format: "%.0f", $0)) Sekunden" } ?? "Nicht angegeben",
                         isEditing: isEditing
                     ) {
                         HStack {
@@ -123,7 +123,7 @@ struct BrewingSessionDetailView: View {
                     
                     SessionDetailRow(
                         title: "Kaffeemenge",
-                        value: session.coffeeAmount.map { "\($0, specifier: "%.1f")g" } ?? "Nicht angegeben",
+                        value: session.coffeeAmount.map { "\(String(format: "%.1f", $0))g" } ?? "Nicht angegeben",
                         isEditing: isEditing
                     ) {
                         HStack {
@@ -134,7 +134,7 @@ struct BrewingSessionDetailView: View {
                     
                     SessionDetailRow(
                         title: "Wassermenge",
-                        value: session.waterAmount.map { "\($0, specifier: "%.0f")ml" } ?? "Nicht angegeben",
+                        value: session.waterAmount.map { "\(String(format: "%.0f", $0))ml" } ?? "Nicht angegeben",
                         isEditing: isEditing
                     ) {
                         HStack {
