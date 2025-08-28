@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct CoffeeDetailView: View {
-    @State var entry: CoffeeEntry
+    @State var coffee: Coffee
     @ObservedObject var dataManager: CoffeeDataManager
     @Environment(\.presentationMode) var presentationMode
     
     @State private var isEditing = false
-    @State private var newTastingNote = ""
+    @State private var showingAddSession = false
     
     var body: some View {
         ScrollView {
@@ -21,109 +21,78 @@ struct CoffeeDetailView: View {
                 // Header Section
                 VStack(alignment: .leading, spacing: 8) {
                     if isEditing {
-                        TextField("Coffee Name", text: $entry.name)
+                        TextField("Kaffee Name", text: $coffee.name)
                             .font(.largeTitle)
                             .fontWeight(.bold)
                     } else {
-                        Text(entry.name)
+                        Text(coffee.name)
                             .font(.largeTitle)
                             .fontWeight(.bold)
                     }
                     
-                    Text(entry.date, style: .date)
+                    Text("Hinzugefügt: \(coffee.dateAdded, style: .date)")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
                 .padding(.horizontal)
                 
-                // Rating Overview
+                // Coffee Info Section
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Overall Rating")
+                    Text("Kaffee Details")
                         .font(.headline)
                     
-                    HStack {
-                        HStack(spacing: 2) {
-                            ForEach(0..<5) { index in
-                                Image(systemName: Double(index) < entry.rating ? "star.fill" : "star")
-                                    .foregroundColor(.yellow)
-                                    .font(.title2)
-                            }
-                        }
-                        
-                        Spacer()
-                        
-                        Text(String(format: "%.1f/5.0", entry.rating))
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                    }
-                    
-                    if isEditing {
-                        RatingSlider(title: "Rating", value: $entry.rating)
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
-                // Basic Info Section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Coffee Details")
-                        .font(.headline)
-                    
-                    DetailRow(title: "Origin", value: entry.origin ?? "Unknown", isEditing: isEditing) {
-                        Picker("Origin", selection: $entry.origin) {
-                            Text("Unknown").tag(nil as String?)
-                            Text("Ethiopia").tag("Ethiopia" as String?)
-                            Text("Colombia").tag("Colombia" as String?)
-                            Text("Brazil").tag("Brazil" as String?)
+                    DetailRow(title: "Herkunft", value: coffee.origin ?? "Unbekannt", isEditing: isEditing) {
+                        Picker("Herkunft", selection: $coffee.origin) {
+                            Text("Unbekannt").tag(nil as String?)
+                            Text("Äthiopien").tag("Äthiopien" as String?)
+                            Text("Kolumbien").tag("Kolumbien" as String?)
+                            Text("Brasilien").tag("Brasilien" as String?)
                             Text("Guatemala").tag("Guatemala" as String?)
-                            Text("Kenya").tag("Kenya" as String?)
-                            Text("Jamaica").tag("Jamaica" as String?)
-                            Text("Yemen").tag("Yemen" as String?)
+                            Text("Kenia").tag("Kenia" as String?)
+                            Text("Jamaika").tag("Jamaika" as String?)
+                            Text("Jemen").tag("Jemen" as String?)
                             Text("Peru").tag("Peru" as String?)
-                            Text("Other").tag("Other" as String?)
+                            Text("Costa Rica").tag("Costa Rica" as String?)
+                            Text("Honduras").tag("Honduras" as String?)
+                            Text("Nicaragua").tag("Nicaragua" as String?)
+                            Text("Andere").tag("Andere" as String?)
                         }
                     }
                     
-                    DetailRow(title: "Price", value: entry.price?.formatted(.currency(code: "USD")) ?? "Not specified", isEditing: isEditing) {
-                        TextField("Price", value: $entry.price, format: .currency(code: "USD"))
+                    DetailRow(title: "Rösterei", value: coffee.roaster ?? "Nicht angegeben", isEditing: isEditing) {
+                        TextField("Rösterei", text: Binding(
+                            get: { coffee.roaster ?? "" },
+                            set: { coffee.roaster = $0.isEmpty ? nil : $0 }
+                        ))
                     }
                     
-                    DetailRow(title: "Roast Level", value: entry.roastLevel.rawValue, isEditing: isEditing) {
-                        Picker("Roast Level", selection: $entry.roastLevel) {
+                    DetailRow(title: "Preis", value: coffee.price?.formatted(.currency(code: "EUR")) ?? "Nicht angegeben", isEditing: isEditing) {
+                        TextField("Preis", value: $coffee.price, format: .currency(code: "EUR"))
+                    }
+                    
+                    DetailRow(title: "Röstgrad", value: coffee.roastLevel.rawValue, isEditing: isEditing) {
+                        Picker("Röstgrad", selection: $coffee.roastLevel) {
                             ForEach(RoastLevel.allCases, id: \.self) { level in
                                 Text(level.rawValue).tag(level)
                             }
                         }
                     }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
-                // Preparation Section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Preparation")
-                        .font(.headline)
                     
-                    DetailRow(title: "Grinder", value: entry.grinder.isEmpty ? "Not specified" : entry.grinder, isEditing: isEditing) {
-                        TextField("Grinder", text: $entry.grinder)
-                    }
-                    
-                    DetailRow(title: "Grind Level", value: entry.grindLevel.rawValue, isEditing: isEditing) {
-                        Picker("Grind Level", selection: $entry.grindLevel) {
-                            ForEach(GrindLevel.allCases, id: \.self) { level in
-                                Text(level.rawValue).tag(level)
-                            }
-                        }
-                    }
-                    
-                    DetailRow(title: "Brew Method", value: entry.brewMethod.rawValue, isEditing: isEditing) {
-                        Picker("Brew Method", selection: $entry.brewMethod) {
-                            ForEach(BrewMethod.allCases, id: \.self) { method in
-                                Text(method.rawValue).tag(method)
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Beschreibung")
+                            .fontWeight(.medium)
+                        
+                        if isEditing {
+                            TextField("Beschreibung", text: $coffee.description, axis: .vertical)
+                                .lineLimit(4, reservesSpace: true)
+                        } else {
+                            if coffee.description.isEmpty {
+                                Text("Keine Beschreibung")
+                                    .foregroundColor(.secondary)
+                                    .italic()
+                            } else {
+                                Text(coffee.description)
+                                    .foregroundColor(.secondary)
                             }
                         }
                     }
@@ -133,88 +102,67 @@ struct CoffeeDetailView: View {
                 .cornerRadius(12)
                 .padding(.horizontal)
                 
-                // Tasting Profile
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Tasting Profile")
-                        .font(.headline)
-                    
-                    if isEditing {
-                        RatingSlider(title: "Aroma", value: $entry.aroma)
-                        RatingSlider(title: "Acidity", value: $entry.acidity)
-                        RatingSlider(title: "Body", value: $entry.body)
-                        RatingSlider(title: "Flavor", value: $entry.flavor)
-                        RatingSlider(title: "Aftertaste", value: $entry.aftertaste)
-                    } else {
-                        TastingProfileRow(title: "Aroma", value: entry.aroma)
-                        TastingProfileRow(title: "Acidity", value: entry.acidity)
-                        TastingProfileRow(title: "Body", value: entry.body)
-                        TastingProfileRow(title: "Flavor", value: entry.flavor)
-                        TastingProfileRow(title: "Aftertaste", value: entry.aftertaste)
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
-                // Tasting Notes
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Tasting Notes")
-                        .font(.headline)
-                    
-                    if isEditing {
+                // Average Rating Section
+                if coffee.averageRating > 0 {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Durchschnittsbewertung")
+                            .font(.headline)
+                        
                         HStack {
-                            TextField("Add tasting note", text: $newTastingNote)
-                            Button("Add") {
-                                if !newTastingNote.isEmpty {
-                                    entry.tastingNotes.append(newTastingNote)
-                                    newTastingNote = ""
+                            HStack(spacing: 2) {
+                                ForEach(0..<5) { index in
+                                    Image(systemName: Double(index) < coffee.averageRating ? "star.fill" : "star")
+                                        .foregroundColor(.yellow)
+                                        .font(.title2)
                                 }
                             }
-                            .disabled(newTastingNote.isEmpty)
+                            
+                            Spacer()
+                            
+                            Text(String(format: "%.1f/5.0", coffee.averageRating))
+                                .font(.title2)
+                                .fontWeight(.semibold)
                         }
+                        
+                        Text("Basierend auf \(coffee.brewingSessions.count) Durchläufen")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding()
+                    .background(Color(.systemGray6))
+                    .cornerRadius(12)
+                    .padding(.horizontal)
+                }
+                
+                // Brewing Sessions Section
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Text("Zubereitungsdurchläufe (\(coffee.brewingSessions.count))")
+                            .font(.headline)
+                        
+                        Spacer()
+                        
+                        Button("Neuer Durchlauf") {
+                            showingAddSession = true
+                        }
+                        .font(.caption)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(8)
                     }
                     
-                    if entry.tastingNotes.isEmpty {
-                        Text("No tasting notes added")
+                    if coffee.brewingSessions.isEmpty {
+                        Text("Noch keine Zubereitungsdurchläufe hinzugefügt")
                             .foregroundColor(.secondary)
                             .italic()
+                            .padding()
                     } else {
-                        ForEach(entry.tastingNotes.indices, id: \.self) { index in
-                            HStack {
-                                Text("• \(entry.tastingNotes[index])")
-                                Spacer()
-                                if isEditing {
-                                    Button("Remove") {
-                                        entry.tastingNotes.remove(at: index)
-                                    }
-                                    .foregroundColor(.red)
-                                    .font(.caption)
-                                }
+                        ForEach(coffee.brewingSessions.sorted(by: { $0.date > $1.date })) { session in
+                            NavigationLink(destination: BrewingSessionDetailView(session: session, coffee: coffee, dataManager: dataManager)) {
+                                BrewingSessionRow(session: session)
                             }
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
-                // Notes Section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Overall Notes")
-                        .font(.headline)
-                    
-                    if isEditing {
-                        TextField("Overall notes and impressions", text: $entry.overallNotes, axis: .vertical)
-                            .lineLimit(4, reservesSpace: true)
-                    } else {
-                        if entry.overallNotes.isEmpty {
-                            Text("No notes added")
-                                .foregroundColor(.secondary)
-                                .italic()
-                        } else {
-                            Text(entry.overallNotes)
                         }
                     }
                 }
@@ -224,18 +172,81 @@ struct CoffeeDetailView: View {
                 .padding(.horizontal)
             }
         }
-        .navigationTitle("Coffee Details")
+        .navigationTitle("Kaffee Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                Button(isEditing ? "Save" : "Edit") {
+                Button(isEditing ? "Speichern" : "Bearbeiten") {
                     if isEditing {
-                        dataManager.updateEntry(entry)
+                        dataManager.updateCoffee(coffee)
                     }
                     isEditing.toggle()
                 }
             }
         }
+        .sheet(isPresented: $showingAddSession) {
+            AddBrewingSessionView(coffee: coffee, dataManager: dataManager)
+        }
+    }
+}
+
+struct BrewingSessionRow: View {
+    let session: BrewingSession
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(session.date, style: .date)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                
+                Spacer()
+                
+                HStack(spacing: 2) {
+                    ForEach(0..<5) { index in
+                        Image(systemName: index < Int(session.rating) ? "star.fill" : "star")
+                            .foregroundColor(.yellow)
+                            .font(.caption)
+                    }
+                }
+            }
+            
+            HStack {
+                Text(session.brewMethod.rawValue)
+                    .font(.caption)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(4)
+                
+                Text(session.grindLevel.rawValue)
+                    .font(.caption)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(Color.green.opacity(0.1))
+                    .cornerRadius(4)
+                
+                if !session.grinder.isEmpty {
+                    Text(session.grinder)
+                        .font(.caption)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.orange.opacity(0.1))
+                        .cornerRadius(4)
+                }
+            }
+            
+            if !session.sessionNotes.isEmpty {
+                Text(session.sessionNotes)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 12)
+        .background(Color(.systemBackground))
+        .cornerRadius(8)
     }
 }
 
@@ -258,32 +269,6 @@ struct DetailRow<EditView: View>: View {
                     .foregroundColor(.secondary)
                 Spacer()
             }
-        }
-    }
-}
-
-struct TastingProfileRow: View {
-    let title: String
-    let value: Double
-    
-    var body: some View {
-        HStack {
-            Text(title)
-                .fontWeight(.medium)
-                .frame(width: 100, alignment: .leading)
-            
-            HStack(spacing: 2) {
-                ForEach(0..<5) { index in
-                    Image(systemName: Double(index) < value ? "star.fill" : "star")
-                        .foregroundColor(.yellow)
-                        .font(.caption)
-                }
-            }
-            
-            Spacer()
-            
-            Text(String(format: "%.1f", value))
-                .foregroundColor(.secondary)
         }
     }
 }
