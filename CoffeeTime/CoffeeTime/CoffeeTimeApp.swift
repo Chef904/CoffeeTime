@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct CoffeeTimeApp: App {
+    @StateObject private var settingsManager = SettingsManager.shared
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .preferredColorScheme(settingsManager.appearanceMode.colorScheme)
         }
     }
 }
