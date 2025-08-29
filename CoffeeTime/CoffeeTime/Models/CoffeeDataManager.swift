@@ -58,6 +58,13 @@ class CoffeeDataManager: ObservableObject {
         saveContext()
     }
     
+    // Convenience method for views that work with Coffee structs
+    func updateCoffee(_ coffee: Coffee) {
+        guard let coffeeEntity = coffeeEntities.first(where: { $0.id == coffee.id }) else { return }
+        coffeeEntity.update(from: coffee)
+        saveContext()
+    }
+    
     func deleteCoffee(_ coffee: Coffee) {
         guard let coffeeEntity = coffeeEntities.first(where: { $0.id == coffee.id }) else { return }
         let context = persistenceController.container.viewContext
@@ -79,6 +86,15 @@ class CoffeeDataManager: ObservableObject {
     }
     
     func updateBrewingSession(_ sessionEntity: BrewingSessionEntity, with session: BrewingSession) {
+        sessionEntity.update(from: session)
+        saveContext()
+    }
+    
+    // Convenience method for views that work with BrewingSession structs
+    func updateBrewingSession(_ session: BrewingSession, in coffee: Coffee) {
+        guard let coffeeEntity = coffeeEntities.first(where: { $0.id == coffee.id }),
+              let sessionEntity = coffeeEntity.brewingSessionsArray.first(where: { $0.id == session.id }) else { return }
+        
         sessionEntity.update(from: session)
         saveContext()
     }

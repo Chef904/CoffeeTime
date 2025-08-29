@@ -19,241 +19,13 @@ struct BrewingSessionDetailView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                // Header Section
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Durchlauf vom \(session.date, style: .date)")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                    
-                    Text("Kaffee: \(coffee.name)")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.horizontal)
-                
-                // Rating Overview
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Bewertung")
-                        .font(.headline)
-                    
-                    HStack {
-                        HStack(spacing: 2) {
-                            ForEach(0..<5) { index in
-                                Image(systemName: Double(index) < session.rating ? "star.fill" : "star")
-                                    .foregroundColor(.yellow)
-                                    .font(.title2)
-                            }
-                        }
-                        
-                        Spacer()
-                        
-                        Text(String(format: "%.1f/5.0", session.rating))
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                    }
-                    
-                    if isEditing {
-                        RatingSlider(title: "Bewertung", value: $session.rating)
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
-                // Preparation Details
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Zubereitung")
-                        .font(.headline)
-                    
-                    SessionDetailRow(title: "Mühle", value: session.grinder.isEmpty ? "Nicht angegeben" : session.grinder, isEditing: isEditing) {
-                        TextField("Mühle", text: $session.grinder)
-                    }
-                    
-                    SessionDetailRow(title: "Mahlgrad", value: session.grindLevel.rawValue, isEditing: isEditing) {
-                        Picker("Mahlgrad", selection: $session.grindLevel) {
-                            ForEach(GrindLevel.allCases, id: \.self) { level in
-                                Text(level.rawValue).tag(level)
-                            }
-                        }
-                    }
-                    
-                    SessionDetailRow(title: "Methode", value: session.brewMethod.rawValue, isEditing: isEditing) {
-                        Picker("Zubereitungsart", selection: $session.brewMethod) {
-                            ForEach(BrewMethod.allCases, id: \.self) { method in
-                                Text(method.rawValue).tag(method)
-                            }
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
-                // Parameters Section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Parameter")
-                        .font(.headline)
-                    
-                    // Water Temperature
-                    let waterTempValue = session.waterTemperature != nil ? String(format: "%.0f°C", session.waterTemperature!) : "Nicht angegeben"
-                    SessionDetailRow(
-                        title: "Wassertemperatur",
-                        value: waterTempValue,
-                        isEditing: isEditing
-                    ) {
-                        HStack {
-                            TextField("Temperatur", value: Binding(
-                                get: { session.waterTemperature ?? 0 },
-                                set: { session.waterTemperature = $0 > 0 ? $0 : nil }
-                            ), format: .number)
-                            Text("°C")
-                        }
-                    }
-                    
-                    // Brew Time
-                    let brewTimeValue = session.brewTime != nil ? String(format: "%.0f Sekunden", session.brewTime!) : "Nicht angegeben"
-                    SessionDetailRow(
-                        title: "Brühzeit",
-                        value: brewTimeValue,
-                        isEditing: isEditing
-                    ) {
-                        HStack {
-                            TextField("Zeit", value: Binding(
-                                get: { session.brewTime ?? 0 },
-                                set: { session.brewTime = $0 > 0 ? $0 : nil }
-                            ), format: .number)
-                            Text("Sekunden")
-                        }
-                    }
-                    
-                    // Coffee Amount
-                    let coffeeAmountValue = session.coffeeAmount != nil ? String(format: "%.1fg", session.coffeeAmount!) : "Nicht angegeben"
-                    SessionDetailRow(
-                        title: "Kaffeemenge",
-                        value: coffeeAmountValue,
-                        isEditing: isEditing
-                    ) {
-                        HStack {
-                            TextField("Menge", value: Binding(
-                                get: { session.coffeeAmount ?? 0 },
-                                set: { session.coffeeAmount = $0 > 0 ? $0 : nil }
-                            ), format: .number)
-                            Text("g")
-                        }
-                    }
-                    
-                    // Water Amount
-                    let waterAmountValue = session.waterAmount != nil ? String(format: "%.0fml", session.waterAmount!) : "Nicht angegeben"
-                    SessionDetailRow(
-                        title: "Wassermenge",
-                        value: waterAmountValue,
-                        isEditing: isEditing
-                    ) {
-                        HStack {
-                            TextField("Menge", value: Binding(
-                                get: { session.waterAmount ?? 0 },
-                                set: { session.waterAmount = $0 > 0 ? $0 : nil }
-                            ), format: .number)
-                            Text("ml")
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
-                // Tasting Profile
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Geschmacksprofil")
-                        .font(.headline)
-                    
-                    if isEditing {
-                        RatingSlider(title: "Aroma", value: $session.aroma)
-                        RatingSlider(title: "Säure", value: $session.acidity)
-                        RatingSlider(title: "Körper", value: $session.body)
-                        RatingSlider(title: "Geschmack", value: $session.flavor)
-                        RatingSlider(title: "Nachgeschmack", value: $session.aftertaste)
-                    } else {
-                        TastingProfileRow(title: "Aroma", value: session.aroma)
-                        TastingProfileRow(title: "Säure", value: session.acidity)
-                        TastingProfileRow(title: "Körper", value: session.body)
-                        TastingProfileRow(title: "Geschmack", value: session.flavor)
-                        TastingProfileRow(title: "Nachgeschmack", value: session.aftertaste)
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
-                // Tasting Notes
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Geschmacksnotizen")
-                        .font(.headline)
-                    
-                    if isEditing {
-                        HStack {
-                            TextField("Geschmacksnotiz hinzufügen", text: $newTastingNote)
-                            Button("Hinzufügen") {
-                                if !newTastingNote.isEmpty {
-                                    session.tastingNotes.append(newTastingNote)
-                                    newTastingNote = ""
-                                }
-                            }
-                            .disabled(newTastingNote.isEmpty)
-                        }
-                    }
-                    
-                    if session.tastingNotes.isEmpty {
-                        Text("Keine Geschmacksnotizen hinzugefügt")
-                            .foregroundColor(.secondary)
-                            .italic()
-                    } else {
-                        ForEach(session.tastingNotes.indices, id: \.self) { index in
-                            HStack {
-                                Text("• \(session.tastingNotes[index])")
-                                Spacer()
-                                if isEditing {
-                                    Button("Entfernen") {
-                                        session.tastingNotes.remove(at: index)
-                                    }
-                                    .foregroundColor(.red)
-                                    .font(.caption)
-                                }
-                            }
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding(.horizontal)
-                
-                // Notes Section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Notizen")
-                        .font(.headline)
-                    
-                    if isEditing {
-                        TextField("Notizen zu diesem Durchlauf", text: $session.sessionNotes, axis: .vertical)
-                            .lineLimit(4, reservesSpace: true)
-                    } else {
-                        if session.sessionNotes.isEmpty {
-                            Text("Keine Notizen hinzugefügt")
-                                .foregroundColor(.secondary)
-                                .italic()
-                        } else {
-                            Text(session.sessionNotes)
-                        }
-                    }
-                }
-                .padding()
-                .background(Color(.systemGray6))
-                .cornerRadius(12)
-                .padding(.horizontal)
+                headerSection
+                ratingSection
+                preparationSection
+                parametersSection
+                tastingProfileSection
+                tastingNotesSection
+                notesSection
             }
         }
         .navigationTitle("Durchlauf Details")
@@ -268,6 +40,245 @@ struct BrewingSessionDetailView: View {
                 }
             }
         }
+    }
+    
+    private var headerSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Durchlauf vom \(session.date, style: .date)")
+                .font(.largeTitle)
+                .fontWeight(.bold)
+            
+            Text("Kaffee: \(coffee.name)")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+        }
+        .padding(.horizontal)
+    }
+    
+    private var ratingSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Bewertung")
+                .font(.headline)
+            
+            HStack {
+                HStack(spacing: 2) {
+                    ForEach(0..<5) { index in
+                        Image(systemName: Double(index) < session.rating ? "star.fill" : "star")
+                            .foregroundColor(.yellow)
+                            .font(.title2)
+                    }
+                }
+                
+                Spacer()
+                
+                Text(String(format: "%.1f/5.0", session.rating))
+                    .font(.title2)
+                    .fontWeight(.semibold)
+            }
+            
+            if isEditing {
+                RatingSlider(title: "Bewertung", value: $session.rating)
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .padding(.horizontal)
+    }
+    
+    private var preparationSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Zubereitung")
+                .font(.headline)
+            
+            SessionDetailRow(title: "Mühle", value: session.grinder.isEmpty ? "Nicht angegeben" : session.grinder, isEditing: isEditing) {
+                TextField("Mühle", text: $session.grinder)
+            }
+            
+            SessionDetailRow(title: "Mahlgrad", value: session.grindLevel.rawValue, isEditing: isEditing) {
+                Picker("Mahlgrad", selection: $session.grindLevel) {
+                    ForEach(GrindLevel.allCases, id: \.self) { level in
+                        Text(level.rawValue).tag(level)
+                    }
+                }
+            }
+            
+            SessionDetailRow(title: "Methode", value: session.brewMethod.rawValue, isEditing: isEditing) {
+                Picker("Zubereitungsart", selection: $session.brewMethod) {
+                    ForEach(BrewMethod.allCases, id: \.self) { method in
+                        Text(method.rawValue).tag(method)
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .padding(.horizontal)
+    }
+    
+    private var parametersSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Parameter")
+                .font(.headline)
+            
+            let waterTempValue = session.waterTemperature != nil ? String(format: "%.0f°C", session.waterTemperature!) : "Nicht angegeben"
+            SessionDetailRow(
+                title: "Wassertemperatur",
+                value: waterTempValue,
+                isEditing: isEditing
+            ) {
+                HStack {
+                    TextField("Temperatur", value: Binding(
+                        get: { session.waterTemperature ?? 0 },
+                        set: { session.waterTemperature = $0 > 0 ? $0 : nil }
+                    ), format: .number)
+                    Text("°C")
+                }
+            }
+            
+            let brewTimeValue = session.brewTime != nil ? String(format: "%.0f Sekunden", session.brewTime!) : "Nicht angegeben"
+            SessionDetailRow(
+                title: "Brühzeit",
+                value: brewTimeValue,
+                isEditing: isEditing
+            ) {
+                HStack {
+                    TextField("Zeit", value: Binding(
+                        get: { session.brewTime ?? 0 },
+                        set: { session.brewTime = $0 > 0 ? $0 : nil }
+                    ), format: .number)
+                    Text("Sekunden")
+                }
+            }
+            
+            let coffeeAmountValue = session.coffeeAmount != nil ? String(format: "%.1fg", session.coffeeAmount!) : "Nicht angegeben"
+            SessionDetailRow(
+                title: "Kaffeemenge",
+                value: coffeeAmountValue,
+                isEditing: isEditing
+            ) {
+                HStack {
+                    TextField("Menge", value: Binding(
+                        get: { session.coffeeAmount ?? 0 },
+                        set: { session.coffeeAmount = $0 > 0 ? $0 : nil }
+                    ), format: .number)
+                    Text("g")
+                }
+            }
+            
+            let waterAmountValue = session.waterAmount != nil ? String(format: "%.0fml", session.waterAmount!) : "Nicht angegeben"
+            SessionDetailRow(
+                title: "Wassermenge",
+                value: waterAmountValue,
+                isEditing: isEditing
+            ) {
+                HStack {
+                    TextField("Menge", value: Binding(
+                        get: { session.waterAmount ?? 0 },
+                        set: { session.waterAmount = $0 > 0 ? $0 : nil }
+                    ), format: .number)
+                    Text("ml")
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .padding(.horizontal)
+    }
+    
+    private var tastingProfileSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Geschmacksprofil")
+                .font(.headline)
+            
+            if isEditing {
+                RatingSlider(title: "Aroma", value: $session.aroma)
+                RatingSlider(title: "Säure", value: $session.acidity)
+                RatingSlider(title: "Körper", value: $session.body)
+                RatingSlider(title: "Geschmack", value: $session.flavor)
+                RatingSlider(title: "Nachgeschmack", value: $session.aftertaste)
+            } else {
+                TastingProfileRow(title: "Aroma", value: session.aroma)
+                TastingProfileRow(title: "Säure", value: session.acidity)
+                TastingProfileRow(title: "Körper", value: session.body)
+                TastingProfileRow(title: "Geschmack", value: session.flavor)
+                TastingProfileRow(title: "Nachgeschmack", value: session.aftertaste)
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .padding(.horizontal)
+    }
+    
+    private var tastingNotesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Geschmacksnotizen")
+                .font(.headline)
+            
+            if isEditing {
+                HStack {
+                    TextField("Geschmacksnotiz hinzufügen", text: $newTastingNote)
+                    Button("Hinzufügen") {
+                        if !newTastingNote.isEmpty {
+                            session.tastingNotes.append(newTastingNote)
+                            newTastingNote = ""
+                        }
+                    }
+                    .disabled(newTastingNote.isEmpty)
+                }
+            }
+            
+            if session.tastingNotes.isEmpty {
+                Text("Keine Geschmacksnotizen hinzugefügt")
+                    .foregroundColor(.secondary)
+                    .italic()
+            } else {
+                ForEach(session.tastingNotes.indices, id: \.self) { index in
+                    HStack {
+                        Text("• \(session.tastingNotes[index])")
+                        Spacer()
+                        if isEditing {
+                            Button("Entfernen") {
+                                session.tastingNotes.remove(at: index)
+                            }
+                            .foregroundColor(.red)
+                            .font(.caption)
+                        }
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .padding(.horizontal)
+    }
+    
+    private var notesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Notizen")
+                .font(.headline)
+            
+            if isEditing {
+                TextField("Notizen zu diesem Durchlauf", text: $session.sessionNotes, axis: .vertical)
+                    .lineLimit(4, reservesSpace: true)
+            } else {
+                if session.sessionNotes.isEmpty {
+                    Text("Keine Notizen hinzugefügt")
+                        .foregroundColor(.secondary)
+                        .italic()
+                } else {
+                    Text(session.sessionNotes)
+                }
+            }
+        }
+        .padding()
+        .background(Color(.systemGray6))
+        .cornerRadius(12)
+        .padding(.horizontal)
     }
 }
 
