@@ -9,7 +9,9 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject private var dataManager = CoffeeDataManager()
+    @EnvironmentObject var themeManager: ThemeManager
     @State private var showingAddCoffee = false
+    @State private var showingSettings = false
     
     var body: some View {
         NavigationView {
@@ -39,6 +41,14 @@ struct ContentView: View {
             }
             .navigationTitle("Kaffee Journal")
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        showingSettings = true
+                    }) {
+                        Image(systemName: "gear")
+                    }
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         showingAddCoffee = true
@@ -49,6 +59,9 @@ struct ContentView: View {
             }
             .sheet(isPresented: $showingAddCoffee) {
                 AddCoffeeView(dataManager: dataManager)
+            }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView(themeManager: themeManager)
             }
         }
     }

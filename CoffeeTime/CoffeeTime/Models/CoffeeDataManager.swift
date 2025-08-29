@@ -6,65 +6,119 @@
 //
 
 import Foundation
+import CoreData
+import Combine
 
 class CoffeeDataManager: ObservableObject {
-    @Published var coffees: [Coffee] = []
+    static let shared = CoffeeDataManager()
     
-    private let saveKey = "Coffees"
+    private let persistenceController = PersistenceController.shared
+    private var cancellables = Set<AnyCancellable>()
+    
+    @Published var coffees: [Coffee] = []
+    @Published var coffeeEntities: [CoffeeEntity] = []
     
     init() {
-        loadCoffees()
+        fetchCoffees()
+        
+        // Listen for Core Data changes (including CloudKit sync)
+        NotificationCenter.default
+            .publisher(for: .NSManagedObjectContextDidSave)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.fetchCoffees()
+            }
+            .store(in: &cancellables)
+    }
+    
+    func fetchCoffees() {
+        let request: NSFetchRequest<CoffeeEntity> = CoffeeEntity.fetchRequest()
+        request.sortDescriptors = [NSSortDescriptor(keyPath: \CoffeeEntity.dateAdded, ascending: false)]
+        
+        do {
+            coffeeEntities = try persistenceController.container.viewContext.fetch(request)
+            coffees = coffeeEntities.map { $0.coffee }
+        } catch {
+            print("Error fetching coffees: \(error)")
+        }
     }
     
     func addCoffee(_ coffee: Coffee) {
-        coffees.append(coffee)
-        saveCoffees()
+        let context = persistenceController.container.viewContext
+        let coffeeEntity = CoffeeEntity(context: context)
+        
+        coffeeEntity.id = coffee.id
+        coffeeEntity.update(from: coffee)
+        
+        saveContext()
     }
     
+    func updateCoffee(_ coffeeEntity: CoffeeEntity, with coffee: Coffee) {
+        coffeeEntity.update(from: coffee)
+        saveContext()
+    }
+    
+    // Convenience method for views that work with Coffee structs
     func updateCoffee(_ coffee: Coffee) {
-        if let index = coffees.firstIndex(where: { $0.id == coffee.id }) {
-            coffees[index] = coffee
-            saveCoffees()
-        }
+        guard let coffeeEntity = coffeeEntities.first(where: { $0.id == coffee.id }) else { return }
+        coffeeEntity.update(from: coffee)
+        saveContext()
     }
     
     func deleteCoffee(_ coffee: Coffee) {
-        coffees.removeAll { $0.id == coffee.id }
-        saveCoffees()
+        guard let coffeeEntity = coffeeEntities.first(where: { $0.id == coffee.id }) else { return }
+        let context = persistenceController.container.viewContext
+        context.delete(coffeeEntity)
+        saveContext()
     }
     
     func addBrewingSession(_ session: BrewingSession, to coffee: Coffee) {
-        if let index = coffees.firstIndex(where: { $0.id == coffee.id }) {
-            coffees[index].brewingSessions.append(session)
-            saveCoffees()
-        }
+        guard let coffeeEntity = coffeeEntities.first(where: { $0.id == coffee.id }) else { return }
+        
+        let context = persistenceController.container.viewContext
+        let sessionEntity = BrewingSessionEntity(context: context)
+        
+        sessionEntity.id = session.id
+        sessionEntity.update(from: session)
+        sessionEntity.coffee = coffeeEntity
+        
+        saveContext()
     }
     
+    func updateBrewingSession(_ sessionEntity: BrewingSessionEntity, with session: BrewingSession) {
+        sessionEntity.update(from: session)
+        saveContext()
+    }
+    
+    // Convenience method for views that work with BrewingSession structs
     func updateBrewingSession(_ session: BrewingSession, in coffee: Coffee) {
-        if let coffeeIndex = coffees.firstIndex(where: { $0.id == coffee.id }),
-           let sessionIndex = coffees[coffeeIndex].brewingSessions.firstIndex(where: { $0.id == session.id }) {
-            coffees[coffeeIndex].brewingSessions[sessionIndex] = session
-            saveCoffees()
-        }
+        guard let coffeeEntity = coffeeEntities.first(where: { $0.id == coffee.id }),
+              let sessionEntity = coffeeEntity.brewingSessionsArray.first(where: { $0.id == session.id }) else { return }
+        
+        sessionEntity.update(from: session)
+        saveContext()
     }
     
     func deleteBrewingSession(_ session: BrewingSession, from coffee: Coffee) {
-        if let coffeeIndex = coffees.firstIndex(where: { $0.id == coffee.id }) {
-            coffees[coffeeIndex].brewingSessions.removeAll { $0.id == session.id }
-            saveCoffees()
-        }
+        guard let coffeeEntity = coffeeEntities.first(where: { $0.id == coffee.id }),
+              let sessionEntity = coffeeEntity.brewingSessionsArray.first(where: { $0.id == session.id }) else { return }
+        
+        let context = persistenceController.container.viewContext
+        context.delete(sessionEntity)
+        saveContext()
     }
     
-    private func saveCoffees() {
-        if let encoded = try? JSONEncoder().encode(coffees) {
-            UserDefaults.standard.set(encoded, forKey: saveKey)
-        }
-    }
-    
-    private func loadCoffees() {
-        if let data = UserDefaults.standard.data(forKey: saveKey),
-           let decoded = try? JSONDecoder().decode([Coffee].self, from: data) {
-            coffees = decoded
+    private func saveContext() {
+        let context = persistenceController.container.viewContext
+        
+        if context.hasChanges {
+            do {
+                try context.save()
+                // CloudKit will automatically sync this change
+            } catch {
+                print("Error saving context: \(error)")
+                // App continues working locally even if sync fails
+            }
         }
     }
 }
