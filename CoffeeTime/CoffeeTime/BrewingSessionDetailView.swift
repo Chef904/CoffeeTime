@@ -96,49 +96,66 @@ struct BrewingSessionDetailView: View {
                     Text("Parameter")
                         .font(.headline)
                     
+                    // Water Temperature
+                    let waterTempValue = session.waterTemperature != nil ? String(format: "%.0f°C", session.waterTemperature!) : "Nicht angegeben"
                     SessionDetailRow(
                         title: "Wassertemperatur",
-                        value: session.waterTemperature.map { "\(String(format: "%.0f", $0))°C" } ?? "Nicht angegeben",
+                        value: waterTempValue,
                         isEditing: isEditing
                     ) {
                         HStack {
-                            TextField("°C", value: $session.waterTemperature, format: .number)
+                            TextField("Temperatur", value: Binding(
+                                get: { session.waterTemperature ?? 0 },
+                                set: { session.waterTemperature = $0 > 0 ? $0 : nil }
+                            ), format: .number)
                             Text("°C")
                         }
                     }
                     
+                    // Brew Time
+                    let brewTimeValue = session.brewTime != nil ? String(format: "%.0f Sekunden", session.brewTime!) : "Nicht angegeben"
                     SessionDetailRow(
                         title: "Brühzeit",
-                        value: session.brewTime.map { "\(String(format: "%.0f", $0)) Sekunden" } ?? "Nicht angegeben",
+                        value: brewTimeValue,
                         isEditing: isEditing
                     ) {
                         HStack {
-                            TextField("Sekunden", value: Binding(
+                            TextField("Zeit", value: Binding(
                                 get: { session.brewTime ?? 0 },
                                 set: { session.brewTime = $0 > 0 ? $0 : nil }
                             ), format: .number)
-                            Text("sec")
+                            Text("Sekunden")
                         }
                     }
                     
+                    // Coffee Amount
+                    let coffeeAmountValue = session.coffeeAmount != nil ? String(format: "%.1fg", session.coffeeAmount!) : "Nicht angegeben"
                     SessionDetailRow(
                         title: "Kaffeemenge",
-                        value: session.coffeeAmount.map { "\(String(format: "%.1f", $0))g" } ?? "Nicht angegeben",
+                        value: coffeeAmountValue,
                         isEditing: isEditing
                     ) {
                         HStack {
-                            TextField("Gramm", value: $session.coffeeAmount, format: .number)
+                            TextField("Menge", value: Binding(
+                                get: { session.coffeeAmount ?? 0 },
+                                set: { session.coffeeAmount = $0 > 0 ? $0 : nil }
+                            ), format: .number)
                             Text("g")
                         }
                     }
                     
+                    // Water Amount
+                    let waterAmountValue = session.waterAmount != nil ? String(format: "%.0fml", session.waterAmount!) : "Nicht angegeben"
                     SessionDetailRow(
                         title: "Wassermenge",
-                        value: session.waterAmount.map { "\(String(format: "%.0f", $0))ml" } ?? "Nicht angegeben",
+                        value: waterAmountValue,
                         isEditing: isEditing
                     ) {
                         HStack {
-                            TextField("ml", value: $session.waterAmount, format: .number)
+                            TextField("Menge", value: Binding(
+                                get: { session.waterAmount ?? 0 },
+                                set: { session.waterAmount = $0 > 0 ? $0 : nil }
+                            ), format: .number)
                             Text("ml")
                         }
                     }
