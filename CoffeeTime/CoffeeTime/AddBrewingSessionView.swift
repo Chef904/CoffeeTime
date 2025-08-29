@@ -135,30 +135,3 @@ struct AddBrewingSessionView: View {
     }
 }
 
-struct RatingSlider: View {
-    let title: String
-    @Binding var value: Double
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(title)
-                Spacer()
-                Text(String(format: "%.1f", value))
-                    .foregroundColor(.secondary)
-            }
-            
-            HStack {
-                Text("1")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                Slider(value: $value, in: 1...5, step: 0.1)
-                
-                Text("5")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-        }
-    }
-}
