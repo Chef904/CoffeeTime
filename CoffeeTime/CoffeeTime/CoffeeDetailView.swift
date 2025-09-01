@@ -9,7 +9,7 @@ import SwiftUI
 
 struct CoffeeDetailView: View {
     @State var coffee: Coffee
-    @ObservedObject var dataManager: CoffeeDataManager
+    @Bindable var dataManager: CoffeeDataManager
     @Environment(\.presentationMode) var presentationMode
     
     @State private var isEditing = false
@@ -83,15 +83,15 @@ struct CoffeeDetailView: View {
                             .fontWeight(.medium)
                         
                         if isEditing {
-                            TextField("Beschreibung", text: $coffee.description, axis: .vertical)
+                            TextField("Beschreibung", text: $coffee.coffeeDescription, axis: .vertical)
                                 .lineLimit(4, reservesSpace: true)
                         } else {
-                            if coffee.description.isEmpty {
+                            if coffee.coffeeDescription.isEmpty {
                                 Text("Keine Beschreibung")
                                     .foregroundColor(.secondary)
                                     .italic()
                             } else {
-                                Text(coffee.description)
+                                Text(coffee.coffeeDescription)
                                     .foregroundColor(.secondary)
                             }
                         }

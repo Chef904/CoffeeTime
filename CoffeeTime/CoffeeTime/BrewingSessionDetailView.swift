@@ -10,7 +10,7 @@ import SwiftUI
 struct BrewingSessionDetailView: View {
     @State var session: BrewingSession
     let coffee: Coffee
-    @ObservedObject var dataManager: CoffeeDataManager
+    @Bindable var dataManager: CoffeeDataManager
     @Environment(\.presentationMode) var presentationMode
     
     @State private var isEditing = false
@@ -26,7 +26,7 @@ struct BrewingSessionDetailView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button(isEditing ? "Speichern" : "Bearbeiten") {
                     if isEditing {
-                        dataManager.updateBrewingSessionData(session, in: coffee)
+                        dataManager.updateBrewingSession(session)
                     }
                     isEditing.toggle()
                 }

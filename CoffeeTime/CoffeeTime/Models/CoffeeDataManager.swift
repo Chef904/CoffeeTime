@@ -7,54 +7,54 @@
 
 import Foundation
 import Combine
+import SwiftData
 
-class CoffeeDataManager: ObservableObject {
+@Observable
+class CoffeeDataManager {
     static let shared = CoffeeDataManager()
     
-    @Published var coffees: [Coffee] = []
-    
-    private let coffeeFileURL: URL
+    var coffees: [Coffee] = []
+    private var modelContext: ModelContext?
     
     init() {
-        // Set up file URL for storing coffee data
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        coffeeFileURL = documentsPath.appendingPathComponent("coffees.json")
-        
+        // The model context will be set by the app when the container is available
+    }
+    
+    func setModelContext(_ context: ModelContext) {
+        self.modelContext = context
         loadCoffees()
     }
     
-    // MARK: - File-based Storage Methods
+    // MARK: - SwiftData Methods
     
     private func loadCoffees() {
+        guard let context = modelContext else { return }
+        
+        let descriptor = FetchDescriptor<Coffee>(
+            sortBy: [SortDescriptor(\.dateAdded, order: .reverse)]
+        )
+        
         do {
-            let data = try Data(contentsOf: coffeeFileURL)
-            coffees = try JSONDecoder().decode([Coffee].self, from: data)
+            coffees = try context.fetch(descriptor)
         } catch {
-            // If file doesn't exist or can't be read, start with empty array
-            print("Could not load coffees: \(error)")
+            print("Error loading coffees: \(error)")
             coffees = []
-        }
-    }
-    
-    private func saveCoffees() {
-        do {
-            let data = try JSONEncoder().encode(coffees)
-            try data.write(to: coffeeFileURL)
-        } catch {
-            print("Error saving coffees: \(error)")
         }
     }
     
     // MARK: - Public Methods
     
     func addCoffee(_ coffee: Coffee) {
-        coffees.append(coffee)
-        saveCoffees()
+        guard let context = modelContext else { return }
+        
+        context.insert(coffee)
+        saveContext()
+        loadCoffees()
     }
     
     func addEntry(_ entry: CoffeeEntry) {
         // Convert CoffeeEntry to Coffee with BrewingSession
-        var newCoffee = Coffee(
+        let newCoffee = Coffee(
             name: entry.name,
             origin: entry.origin,
             roaster: nil,
@@ -66,7 +66,7 @@ class CoffeeDataManager: ObservableObject {
         newCoffee.dateAdded = entry.date
         
         // Create a brewing session from the entry data
-        var brewingSession = BrewingSession(
+        let brewingSession = BrewingSession(
             grinder: entry.grinder,
             sessionNotes: entry.overallNotes
         )
@@ -80,43 +80,59 @@ class CoffeeDataManager: ObservableObject {
         brewingSession.body = entry.body
         brewingSession.flavor = entry.flavor
         brewingSession.aftertaste = entry.aftertaste
+        brewingSession.coffee = newCoffee
         
-        newCoffee.brewingSessions = [brewingSession]
+        newCoffee.brewingSessions.append(brewingSession)
         
         addCoffee(newCoffee)
     }
     
     func updateCoffee(_ coffee: Coffee) {
-        if let index = coffees.firstIndex(where: { $0.id == coffee.id }) {
-            coffees[index] = coffee
-            saveCoffees()
-        }
+        saveContext()
+        loadCoffees()
     }
     
     func deleteCoffee(_ coffee: Coffee) {
-        coffees.removeAll { $0.id == coffee.id }
-        saveCoffees()
+        guard let context = modelContext else { return }
+        
+        context.delete(coffee)
+        saveContext()
+        loadCoffees()
     }
     
     func addBrewingSession(_ session: BrewingSession, to coffee: Coffee) {
-        if let index = coffees.firstIndex(where: { $0.id == coffee.id }) {
-            coffees[index].brewingSessions.append(session)
-            saveCoffees()
-        }
+        guard let context = modelContext else { return }
+        
+        session.coffee = coffee
+        coffee.brewingSessions.append(session)
+        context.insert(session)
+        saveContext()
+        loadCoffees()
     }
     
-    func updateBrewingSessionData(_ session: BrewingSession, in coffee: Coffee) {
-        if let coffeeIndex = coffees.firstIndex(where: { $0.id == coffee.id }),
-           let sessionIndex = coffees[coffeeIndex].brewingSessions.firstIndex(where: { $0.id == session.id }) {
-            coffees[coffeeIndex].brewingSessions[sessionIndex] = session
-            saveCoffees()
-        }
+    func updateBrewingSession(_ session: BrewingSession) {
+        saveContext()
+        loadCoffees()
     }
     
     func deleteBrewingSession(_ session: BrewingSession, from coffee: Coffee) {
-        if let coffeeIndex = coffees.firstIndex(where: { $0.id == coffee.id }) {
-            coffees[coffeeIndex].brewingSessions.removeAll { $0.id == session.id }
-            saveCoffees()
+        guard let context = modelContext else { return }
+        
+        if let index = coffee.brewingSessions.firstIndex(where: { $0.id == session.id }) {
+            coffee.brewingSessions.remove(at: index)
+        }
+        context.delete(session)
+        saveContext()
+        loadCoffees()
+    }
+    
+    private func saveContext() {
+        guard let context = modelContext else { return }
+        
+        do {
+            try context.save()
+        } catch {
+            print("Error saving context: \(error)")
         }
     }
 }

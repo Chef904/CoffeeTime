@@ -6,37 +6,54 @@
 //
 
 import Foundation
+import SwiftData
 
-struct Coffee: Identifiable, Codable {
-    let id = UUID()
+@Model
+class Coffee {
+    @Attribute(.unique) var id: UUID
     var name: String
     var origin: String?
     var price: Double?
     var roastLevel: RoastLevel
     var roaster: String?
-    var description: String
-    var imageName: String? // For future image support
+    var coffeeDescription: String
+    var imageName: String?
     var dateAdded: Date
+    
+    @Relationship(deleteRule: .cascade, inverse: \BrewingSession.coffee)
+    var brewingSessions: [BrewingSession] = []
+    
     var averageRating: Double {
         guard !brewingSessions.isEmpty else { return 0.0 }
         return brewingSessions.map { $0.rating }.reduce(0, +) / Double(brewingSessions.count)
     }
-    var brewingSessions: [BrewingSession] = []
     
     init(name: String = "", origin: String? = nil, roaster: String? = nil, description: String = "") {
+        self.id = UUID()
         self.name = name
         self.origin = origin
         self.price = nil
         self.roastLevel = .medium
         self.roaster = roaster
-        self.description = description
+        self.coffeeDescription = description
         self.imageName = nil
         self.dateAdded = Date()
     }
 }
 
-struct BrewingSession: Identifiable, Codable {
-    let id = UUID()
+@Model
+class TastingNote {
+    var note: String
+    var brewingSession: BrewingSession?
+    
+    init(note: String) {
+        self.note = note
+    }
+}
+
+@Model
+class BrewingSession {
+    @Attribute(.unique) var id: UUID
     var date: Date
     var rating: Double // 1-5 stars
     var grindLevel: GrindLevel
@@ -46,7 +63,6 @@ struct BrewingSession: Identifiable, Codable {
     var brewTime: TimeInterval? // in seconds
     var coffeeAmount: Double? // in grams
     var waterAmount: Double? // in ml
-    var tastingNotes: [String]
     var sessionNotes: String
     var aroma: Double // 1-5 rating
     var acidity: Double // 1-5 rating
@@ -54,7 +70,25 @@ struct BrewingSession: Identifiable, Codable {
     var flavor: Double // 1-5 rating
     var aftertaste: Double // 1-5 rating
     
+    var coffee: Coffee?
+    @Relationship(deleteRule: .cascade, inverse: \TastingNote.brewingSession)
+    var tastingNoteEntities: [TastingNote] = []
+    
+    // Computed property to maintain compatibility with existing code
+    var tastingNotes: [String] {
+        get {
+            return tastingNoteEntities.map { $0.note }
+        }
+        set {
+            // Remove existing notes
+            tastingNoteEntities.removeAll()
+            // Add new notes
+            tastingNoteEntities = newValue.map { TastingNote(note: $0) }
+        }
+    }
+    
     init(grinder: String = "", sessionNotes: String = "") {
+        self.id = UUID()
         self.date = Date()
         self.rating = 3.0
         self.grindLevel = .medium
@@ -64,7 +98,6 @@ struct BrewingSession: Identifiable, Codable {
         self.brewTime = nil
         self.coffeeAmount = nil
         self.waterAmount = nil
-        self.tastingNotes = []
         self.sessionNotes = sessionNotes
         self.aroma = 3.0
         self.acidity = 3.0
