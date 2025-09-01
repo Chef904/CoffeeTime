@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AddCoffeeEntryView: View {
-    @ObservedObject var dataManager: CoffeeDataManager
+    @Bindable var dataManager: CoffeeDataManager
     @Environment(\.presentationMode) var presentationMode
     
     @State private var entry = CoffeeEntry()
