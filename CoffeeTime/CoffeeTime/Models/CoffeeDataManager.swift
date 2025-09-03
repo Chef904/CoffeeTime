@@ -82,7 +82,8 @@ class CoffeeDataManager {
         brewingSession.aftertaste = entry.aftertaste
         brewingSession.coffee = newCoffee
         
-        newCoffee.brewingSessions.append(brewingSession)
+        if newCoffee.brewingSessions == nil { newCoffee.brewingSessions = [] }
+        newCoffee.brewingSessions?.append(brewingSession)
         
         addCoffee(newCoffee)
     }
@@ -104,7 +105,8 @@ class CoffeeDataManager {
         guard let context = modelContext else { return }
         
         session.coffee = coffee
-        coffee.brewingSessions.append(session)
+        if coffee.brewingSessions == nil { coffee.brewingSessions = [] }
+        coffee.brewingSessions?.append(session)
         context.insert(session)
         saveContext()
         loadCoffees()
@@ -118,8 +120,9 @@ class CoffeeDataManager {
     func deleteBrewingSession(_ session: BrewingSession, from coffee: Coffee) {
         guard let context = modelContext else { return }
         
-        if let index = coffee.brewingSessions.firstIndex(where: { $0.id == session.id }) {
-            coffee.brewingSessions.remove(at: index)
+        if var sessions = coffee.brewingSessions, let idx = sessions.firstIndex(where: { $0.id == session.id }) {
+            sessions.remove(at: idx)
+            coffee.brewingSessions = sessions
         }
         context.delete(session)
         saveContext()

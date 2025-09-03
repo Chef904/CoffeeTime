@@ -114,7 +114,7 @@ struct CoffeeRow: View {
                 
                 Spacer()
                 
-                Text("\(coffee.brewingSessions.count) Durchläufe")
+                Text("\(coffee.brewingSessions?.count ?? 0) Durchläufe")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

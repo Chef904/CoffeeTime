@@ -10,22 +10,25 @@ import SwiftData
 
 @Model
 class Coffee {
-    @Attribute(.unique) var id: UUID
-    var name: String
+    // CloudKit: remove unique constraint and provide default
+    var id: UUID = UUID()
+    var name: String = ""
     var origin: String?
     var price: Double?
-    var roastLevel: RoastLevel
+    var roastLevel: RoastLevel = RoastLevel.medium
     var roaster: String?
-    var coffeeDescription: String
+    var coffeeDescription: String = ""
     var imageName: String?
-    var dateAdded: Date
+    var dateAdded: Date = Date()
     
+    // CloudKit: relationships must be optional
     @Relationship(deleteRule: .cascade, inverse: \BrewingSession.coffee)
-    var brewingSessions: [BrewingSession] = []
+    var brewingSessions: [BrewingSession]? = nil
     
     var averageRating: Double {
-        guard !brewingSessions.isEmpty else { return 0.0 }
-        return brewingSessions.map { $0.rating }.reduce(0, +) / Double(brewingSessions.count)
+        let sessions = brewingSessions ?? []
+        guard !sessions.isEmpty else { return 0.0 }
+        return sessions.map { $0.rating }.reduce(0, +) / Double(sessions.count)
     }
     
     init(name: String = "", origin: String? = nil, roaster: String? = nil, description: String = "") {
@@ -43,7 +46,7 @@ class Coffee {
 
 @Model
 class TastingNote {
-    var note: String
+    var note: String = ""
     var brewingSession: BrewingSession?
     
     init(note: String) {
@@ -53,38 +56,34 @@ class TastingNote {
 
 @Model
 class BrewingSession {
-    @Attribute(.unique) var id: UUID
-    var date: Date
-    var rating: Double // 1-5 stars
-    var grindLevel: GrindLevel
-    var grinder: String
-    var brewMethod: BrewMethod
+    // CloudKit: remove unique constraint and provide defaults
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var rating: Double = 3.0 // 1-5 stars
+    var grindLevel: GrindLevel = GrindLevel.medium
+    var grinder: String = ""
+    var brewMethod: BrewMethod = BrewMethod.drip
     var waterTemperature: Double? // in Celsius
     var brewTime: TimeInterval? // in seconds
     var coffeeAmount: Double? // in grams
     var waterAmount: Double? // in ml
-    var sessionNotes: String
-    var aroma: Double // 1-5 rating
-    var acidity: Double // 1-5 rating
-    var body: Double // 1-5 rating
-    var flavor: Double // 1-5 rating
-    var aftertaste: Double // 1-5 rating
+    var sessionNotes: String = ""
+    var aroma: Double = 3.0 // 1-5 rating
+    var acidity: Double = 3.0 // 1-5 rating
+    var body: Double = 3.0 // 1-5 rating
+    var flavor: Double = 3.0 // 1-5 rating
+    var aftertaste: Double = 3.0 // 1-5 rating
     
     var coffee: Coffee?
-    @Relationship(deleteRule: .cascade, inverse: \TastingNote.brewingSession)
-    var tastingNoteEntities: [TastingNote] = []
     
-    // Computed property to maintain compatibility with existing code
+    // CloudKit-safe relationship for tasting notes
+    @Relationship(deleteRule: .cascade, inverse: \TastingNote.brewingSession)
+    var tastingNoteEntities: [TastingNote]? = nil
+    
+    // Computed property backed by relationship
     var tastingNotes: [String] {
-        get {
-            return tastingNoteEntities.map { $0.note }
-        }
-        set {
-            // Remove existing notes
-            tastingNoteEntities.removeAll()
-            // Add new notes
-            tastingNoteEntities = newValue.map { TastingNote(note: $0) }
-        }
+        get { (tastingNoteEntities ?? []).map { $0.note } }
+        set { tastingNoteEntities = newValue.map { TastingNote(note: $0) } }
     }
     
     init(grinder: String = "", sessionNotes: String = "") {

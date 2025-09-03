@@ -12,21 +12,8 @@ import SwiftData
 struct CoffeeTimeApp: App {
     @StateObject private var settingsManager = SettingsManager.shared
     
-    let modelContainer: ModelContainer
-    
-    init() {
-        do {
-            modelContainer = try ModelContainer(
-                for: Coffee.self, BrewingSession.self, TastingNote.self,
-                configurations: ModelConfiguration(
-                    "CoffeeTimeModel",
-                    cloudKitDatabase: .private("iCloud.com.johannestourbeslis.CoffeeTime")
-                )
-            )
-        } catch {
-            fatalError("Failed to create ModelContainer: \(error)")
-        }
-    }
+    // Use centralized container
+    let modelContainer: ModelContainer = PersistenceController.shared.modelContainer
     
     var body: some Scene {
         WindowGroup {
@@ -34,7 +21,6 @@ struct CoffeeTimeApp: App {
                 .preferredColorScheme(settingsManager.appearanceMode.colorScheme)
                 .modelContainer(modelContainer)
                 .onAppear {
-                    // Set the model context in the data manager
                     CoffeeDataManager.shared.setModelContext(modelContainer.mainContext)
                 }
         }
