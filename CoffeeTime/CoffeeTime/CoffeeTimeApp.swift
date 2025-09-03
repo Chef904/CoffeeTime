@@ -15,17 +15,22 @@ struct CoffeeTimeApp: App {
     let modelContainer: ModelContainer
     
     init() {
+        // First try local storage to ensure basic functionality works
         do {
-            modelContainer = try ModelContainer(
-                for: Coffee.self, BrewingSession.self, TastingNote.self,
-                configurations: ModelConfiguration(
-                    "CoffeeTimeModel",
-                    cloudKitDatabase: .private("iCloud.com.johannestourbeslis.CoffeeTime")
-                )
-            )
+            modelContainer = try ModelContainer(for: Coffee.self, BrewingSession.self, TastingNote.self)
+            print("Using local storage - CloudKit can be enabled later")
         } catch {
             fatalError("Failed to create ModelContainer: \(error)")
         }
+        
+        // TODO: Enable CloudKit once capabilities are configured
+        // modelContainer = try ModelContainer(
+        //     for: Coffee.self, BrewingSession.self, TastingNote.self,
+        //     configurations: ModelConfiguration(
+        //         "CoffeeTimeModel",
+        //         cloudKitDatabase: .private("iCloud.com.johannestourbeslis.CoffeeTime")
+        //     )
+        // )
     }
     
     var body: some Scene {
