@@ -9,7 +9,7 @@ import SwiftUI
 
 struct CoffeeDetailView: View {
     @State var coffee: Coffee
-    @ObservedObject var dataManager: CoffeeDataManager
+    @Bindable var dataManager: CoffeeDataManager
     @Environment(\.presentationMode) var presentationMode
     
     @State private var isEditing = false
@@ -83,15 +83,15 @@ struct CoffeeDetailView: View {
                             .fontWeight(.medium)
                         
                         if isEditing {
-                            TextField("Beschreibung", text: $coffee.description, axis: .vertical)
+                            TextField("Beschreibung", text: $coffee.coffeeDescription, axis: .vertical)
                                 .lineLimit(4, reservesSpace: true)
                         } else {
-                            if coffee.description.isEmpty {
+                            if coffee.coffeeDescription.isEmpty {
                                 Text("Keine Beschreibung")
                                     .foregroundColor(.secondary)
                                     .italic()
                             } else {
-                                Text(coffee.description)
+                                Text(coffee.coffeeDescription)
                                     .foregroundColor(.secondary)
                             }
                         }
@@ -124,7 +124,7 @@ struct CoffeeDetailView: View {
                                 .fontWeight(.semibold)
                         }
                         
-                        Text("Basierend auf \(coffee.brewingSessions.count) Durchläufen")
+                        Text("Basierend auf \((coffee.brewingSessions?.count ?? 0)) Durchläufen")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -137,7 +137,7 @@ struct CoffeeDetailView: View {
                 // Brewing Sessions Section
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Text("Zubereitungsdurchläufe (\(coffee.brewingSessions.count))")
+                        Text("Zubereitungsdurchläufe (\(coffee.brewingSessions?.count ?? 0))")
                             .font(.headline)
                         
                         Spacer()
@@ -153,13 +153,13 @@ struct CoffeeDetailView: View {
                         .cornerRadius(8)
                     }
                     
-                    if coffee.brewingSessions.isEmpty {
+                    if (coffee.brewingSessions ?? []).isEmpty {
                         Text("Noch keine Zubereitungsdurchläufe hinzugefügt")
                             .foregroundColor(.secondary)
                             .italic()
                             .padding()
                     } else {
-                        ForEach(coffee.brewingSessions.sorted(by: { $0.date > $1.date })) { session in
+                        ForEach((coffee.brewingSessions ?? []).sorted(by: { $0.date > $1.date })) { session in
                             NavigationLink(destination: BrewingSessionDetailView(session: session, coffee: coffee, dataManager: dataManager)) {
                                 BrewingSessionRow(session: session)
                             }

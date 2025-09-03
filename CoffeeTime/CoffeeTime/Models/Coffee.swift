@@ -6,55 +6,88 @@
 //
 
 import Foundation
+import SwiftData
 
-struct Coffee: Identifiable, Codable {
-    let id = UUID()
-    var name: String
+@Model
+class Coffee {
+    // CloudKit: remove unique constraint and provide default
+    var id: UUID = UUID()
+    var name: String = ""
     var origin: String?
     var price: Double?
-    var roastLevel: RoastLevel
+    var roastLevel: RoastLevel = RoastLevel.medium
     var roaster: String?
-    var description: String
-    var imageName: String? // For future image support
-    var dateAdded: Date
+    var coffeeDescription: String = ""
+    var imageName: String?
+    var dateAdded: Date = Date()
+    
+    // CloudKit: relationships must be optional
+    @Relationship(deleteRule: .cascade, inverse: \BrewingSession.coffee)
+    var brewingSessions: [BrewingSession]? = nil
+    
     var averageRating: Double {
-        guard !brewingSessions.isEmpty else { return 0.0 }
-        return brewingSessions.map { $0.rating }.reduce(0, +) / Double(brewingSessions.count)
+        let sessions = brewingSessions ?? []
+        guard !sessions.isEmpty else { return 0.0 }
+        return sessions.map { $0.rating }.reduce(0, +) / Double(sessions.count)
     }
-    var brewingSessions: [BrewingSession] = []
     
     init(name: String = "", origin: String? = nil, roaster: String? = nil, description: String = "") {
+        self.id = UUID()
         self.name = name
         self.origin = origin
         self.price = nil
         self.roastLevel = .medium
         self.roaster = roaster
-        self.description = description
+        self.coffeeDescription = description
         self.imageName = nil
         self.dateAdded = Date()
     }
 }
 
-struct BrewingSession: Identifiable, Codable {
-    let id = UUID()
-    var date: Date
-    var rating: Double // 1-5 stars
-    var grindLevel: GrindLevel
-    var grinder: String
-    var brewMethod: BrewMethod
+@Model
+class TastingNote {
+    var note: String = ""
+    var brewingSession: BrewingSession?
+    
+    init(note: String) {
+        self.note = note
+    }
+}
+
+@Model
+class BrewingSession {
+    // CloudKit: remove unique constraint and provide defaults
+    var id: UUID = UUID()
+    var date: Date = Date()
+    var rating: Double = 3.0 // 1-5 stars
+    var grindLevel: GrindLevel = GrindLevel.medium
+    var grinder: String = ""
+    var brewMethod: BrewMethod = BrewMethod.drip
     var waterTemperature: Double? // in Celsius
     var brewTime: TimeInterval? // in seconds
     var coffeeAmount: Double? // in grams
     var waterAmount: Double? // in ml
-    var tastingNotes: [String]
-    var sessionNotes: String
-    var aroma: Double // 1-5 rating
-    var acidity: Double // 1-5 rating
-    var body: Double // 1-5 rating
-    var flavor: Double // 1-5 rating
-    var aftertaste: Double // 1-5 rating
+    var sessionNotes: String = ""
+    var aroma: Double = 3.0 // 1-5 rating
+    var acidity: Double = 3.0 // 1-5 rating
+    var body: Double = 3.0 // 1-5 rating
+    var flavor: Double = 3.0 // 1-5 rating
+    var aftertaste: Double = 3.0 // 1-5 rating
+    
+    var coffee: Coffee?
+    
+    // CloudKit-safe relationship for tasting notes
+    @Relationship(deleteRule: .cascade, inverse: \TastingNote.brewingSession)
+    var tastingNoteEntities: [TastingNote]? = nil
+    
+    // Computed property backed by relationship
+    var tastingNotes: [String] {
+        get { (tastingNoteEntities ?? []).map { $0.note } }
+        set { tastingNoteEntities = newValue.map { TastingNote(note: $0) } }
+    }
     
     init(grinder: String = "", sessionNotes: String = "") {
+        self.id = UUID()
         self.date = Date()
         self.rating = 3.0
         self.grindLevel = .medium
@@ -64,7 +97,6 @@ struct BrewingSession: Identifiable, Codable {
         self.brewTime = nil
         self.coffeeAmount = nil
         self.waterAmount = nil
-        self.tastingNotes = []
         self.sessionNotes = sessionNotes
         self.aroma = 3.0
         self.acidity = 3.0

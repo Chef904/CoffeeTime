@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AddCoffeeView: View {
-    @ObservedObject var dataManager: CoffeeDataManager
+    @Bindable var dataManager: CoffeeDataManager
     @Environment(\.presentationMode) var presentationMode
     
     @State private var coffee = Coffee()
@@ -56,7 +56,7 @@ struct AddCoffeeView: View {
                             .frame(width: 100)
                     }
                     
-                    TextField("Beschreibung", text: $coffee.description, axis: .vertical)
+                    TextField("Beschreibung", text: $coffee.coffeeDescription, axis: .vertical)
                         .lineLimit(3, reservesSpace: true)
                 }
                 

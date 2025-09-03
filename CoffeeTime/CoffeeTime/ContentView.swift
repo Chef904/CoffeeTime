@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var dataManager = CoffeeDataManager()
+    @State private var dataManager = CoffeeDataManager.shared
     @State private var showingAddCoffee = false
     @State private var showingSettings = false
     
@@ -114,13 +114,13 @@ struct CoffeeRow: View {
                 
                 Spacer()
                 
-                Text("\(coffee.brewingSessions.count) Durchläufe")
+                Text("\(coffee.brewingSessions?.count ?? 0) Durchläufe")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
             
-            if !coffee.description.isEmpty {
-                Text(coffee.description)
+            if !coffee.coffeeDescription.isEmpty {
+                Text(coffee.coffeeDescription)
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .lineLimit(2)

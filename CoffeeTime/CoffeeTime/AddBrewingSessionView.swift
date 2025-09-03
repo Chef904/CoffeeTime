@@ -9,7 +9,7 @@ import SwiftUI
 
 struct AddBrewingSessionView: View {
     let coffee: Coffee
-    @ObservedObject var dataManager: CoffeeDataManager
+    @Bindable var dataManager: CoffeeDataManager
     @Environment(\.presentationMode) var presentationMode
     
     @State private var session = BrewingSession()
@@ -134,4 +134,3 @@ struct AddBrewingSessionView: View {
         }
     }
 }
-
